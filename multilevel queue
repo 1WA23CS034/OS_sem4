@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    int id;
+    int at, bt, rt, ct, wt, tat, queue;
+} process;
+
+int total_wt = 0, total_tat = 0;
+
+void schedule(process system[], int s_count, process user[], int u_count, int q) {
+    int time = 0, s_ptr = 0, u_ptr = 0, completed = 0;
+    int *sys_remaining = malloc(s_count * sizeof(int));
+    int *user_remaining = malloc(u_count * sizeof(int));
+   
+    // Initialize remaining times
+    for(int i=0; i<s_count; i++) sys_remaining[i] = system[i].bt;
+    for(int i=0; i<u_count; i++) user_remaining[i] = user[i].bt;
+
+    while(completed < s_count + u_count) {
+       
+        int sys_active = 0;
+        for(int i=0; i<s_count; i++) {
+            if(system[i].at <= time && sys_remaining[i] > 0) {
+                sys_active = 1;
+                int exec = (sys_remaining[i] > q) ? q : sys_remaining[i];
+                sys_remaining[i] -= exec;
+                time += exec;
+               
+                // Check if process completed
+                if(sys_remaining[i] == 0) {
+                    system[i].ct = time;
+                    system[i].tat = time - system[i].at;
+                    system[i].wt = system[i].tat - system[i].bt;
+                    total_wt += system[i].wt;
+                    total_tat += system[i].tat;
+                    completed++;
+                }
+                break; 
+            }
+        }
+       
+     
+        if(!sys_active) {
+            if(u_ptr < u_count && user[u_ptr].at <= time) {
+                int exec_time = user_remaining[u_ptr];
+                time += exec_time;
+                user[u_ptr].ct = time;
+                user[u_ptr].tat = time - user[u_ptr].at;
+                user[u_ptr].wt = user[u_ptr].tat - user[u_ptr].bt;
+                total_wt += user[u_ptr].wt;
+                total_tat += user[u_ptr].tat;
+                completed++;
+                u_ptr++;
+            } else {
+                time++;
+            }
+        }
+    }
+    free(sys_remaining);
+    free(user_remaining);
+}
+
+int main() {
+    int n, q, s_count = 0, u_count = 0;
+    printf("Enter total processes: ");
+    scanf("%d", &n);
+
+    process processes[n], system[n], user[n];
+   
+    for(int i=0; i<n; i++) {
+        printf("Process %d (arrival burst queue): ", i+1);
+        scanf("%d %d %d", &processes[i].at, &processes[i].bt, &processes[i].queue);
+        processes[i].id = i+1;
+        processes[i].rt = processes[i].bt;
+       
+        if(processes[i].queue == 0) system[s_count++] = processes[i];
+        else user[u_count++] = processes[i];
+    }
+
+    printf("Enter RR quantum: ");
+    scanf("%d", &q);
+   
+    
+    for(int i=0; i<s_count; i++)
+        for(int j=i+1; j<s_count; j++)
+            if(system[i].at > system[j].at) {
+                process temp = system[i];
+                system[i] = system[j];
+                system[j] = temp;
+            }
+
+    for(int i=0; i<u_count; i++)
+        for(int j=i+1; j<u_count; j++)
+            if(user[i].at > user[j].at) {
+                process temp = user[i];
+                user[i] = user[j];
+                user[j] = temp;
+            }
+
+    schedule(system, s_count, user, u_count, q);
+
+   
+    printf("\nPID\tArrival\tBurst\tCT\tWT\tTAT\tQueue\n");
+    for(int i=0; i<s_count; i++)
+        printf("%d\t%d\t%d\t%d\t%d\t%d\tRR\n", system[i].id, system[i].at,
+               system[i].bt, system[i].ct, system[i].wt, system[i].tat);
+   
+    for(int i=0; i<u_count; i++)
+        printf("%d\t%d\t%d\t%d\t%d\t%d\tFCFS\n", user[i].id, user[i].at,
+               user[i].bt, user[i].ct, user[i].wt, user[i].tat);
+
+    printf("\nAvg WT: %.2f\tAvg TAT: %.2f\n",
+          (float)total_wt/n, (float)total_tat/n);
+    return 0;
+}
