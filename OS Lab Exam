@@ -1,0 +1,46 @@
+//round robin
+#include<stdio.h>
+
+int main(){
+int i,j,n,q,t=0;
+int bt[10],tat[10],wt[10],rt[10];
+float atat=0,awt=0;
+printf("enter the number of processes/ players(max=10):");
+scanf("%d",&n);
+
+printf("enter the burst time of \n");
+for(i=0;i<n;i++){
+printf("P%d : ",i+1);
+scanf("%d",&bt[i]);
+rt[i]=bt[i];}
+printf("enter quantum time:");
+scanf("%d",&q);
+int done;
+do{
+    done=1;
+    for(i=0;i<n;i++){
+        if(rt[i]>0){
+            done=0;
+            if(rt[i]>q){
+                t+=q;
+                rt[i]-=q;
+            }
+            else{
+                t+=rt[i];
+                tat[i]=t;
+                rt[i]=0;
+            }
+        }
+    }
+}while(!done);
+
+printf("quantum= %d\n",q);
+printf("Process\tBT\tTAT\tWT\n");
+for(i=0;i<n;i++){
+wt[i]=tat[i]-bt[i];
+atat+=(float)tat[i];
+awt+=(float)wt[i];
+printf("%d\t%d\t%d\t%d\n", i+1,bt[i],tat[i],wt[i]);
+}
+printf("total required play time = %d",t);
+return 0;}
